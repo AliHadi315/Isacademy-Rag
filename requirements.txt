@@ -1,0 +1,36 @@
+# --- UI ---
+streamlit>=1.36
+plotly>=5.20
+
+# --- Gemini (the only AI provider) ---
+google-genai>=1.0
+
+# --- core ---
+pydantic>=2.6
+python-dotenv>=1.0
+numpy>=1.26
+pandas>=2.1
+
+# --- documents ---
+PyMuPDF>=1.24
+pillow>=10.0
+
+# --- RAG ---
+chromadb>=0.5
+sentence-transformers>=3.0
+
+# --- analytics ---
+scikit-learn>=1.4
+matplotlib>=3.8
+openpyxl>=3.1
+
+# --- reports ---
+reportlab>=4.0
+arabic-reshaper>=3.0     # Arabic letter joining in PDF export
+python-bidi>=0.4         # right-to-left ordering in PDF export
+
+# --- tests ---
+pytest>=8.0
+
+# --- optional ---
+# easyocr        # OCR for scanned PDFs (ENABLE_OCR=true)

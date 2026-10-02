@@ -1,0 +1,74 @@
+/* Stylesheet for generated HTML reports.
+   Edit this file to restyle every report - no Python change needed.
+   report_generator.py inlines it, so a report stays a single portable file. */
+
+:root {
+  --ink: #0f172a;
+  --muted: #475569;
+  --line: #e2e8f0;
+  --accent: #2563eb;
+  --flag: #b91c1c;
+  --bg: #ffffff;
+  --page-bg: #f8fafc;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  margin: 0;
+  background: var(--page-bg);
+  color: var(--ink);
+  line-height: 1.65;
+}
+
+.page {
+  max-width: 880px;
+  margin: 0 auto;
+  background: var(--bg);
+  padding: 56px 60px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, .08);
+}
+
+h1 { font-size: 30px; margin: 0 0 6px; letter-spacing: -.02em; }
+
+h2 {
+  font-size: 19px;
+  margin: 40px 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--line);
+}
+
+.meta { color: var(--muted); font-size: 13px; margin-bottom: 28px; }
+
+.toc {
+  background: #f1f5f9;
+  border-left: 3px solid var(--accent);
+  padding: 14px 22px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+.toc ol { margin: 6px 0; padding-left: 20px; }
+
+ul.bullets { padding-left: 20px; }
+ul.bullets li { margin: 6px 0; }
+
+figure { margin: 22px 0; text-align: center; }
+figure img { max-width: 100%; border: 1px solid var(--line); border-radius: 6px; }
+figcaption { color: var(--muted); font-size: 12px; margin-top: 8px; }
+
+/* claims the verification agent could not match to evidence */
+.flag { color: var(--flag); }
+
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media print {
+  body { background: #fff; }
+  .page { box-shadow: none; padding: 0; }
+}
