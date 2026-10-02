@@ -25,6 +25,21 @@ provider).
 Two things it will not do: invent a citation, or answer a visual question with
 text alone.
 
+### One question, end to end
+
+![Answering a question: grounded answer, page-level sources, and the semantic PCA map](docs/screenshots/ask-answer.png)
+
+*A real run over three Amazon rainforest reports. The answer is written by
+Gemini from retrieved passages only; every source names its document and page;
+the PCA map places the question (red star) among its nearest passages, shows
+which cluster it belongs to, lists the closest matches with their true cosine
+similarity, and explains why they are close.*
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+Screenshots are regenerated from a live app with
+`python docs/capture_screenshots.py`.
+
 ---
 
 ## 2. Architecture

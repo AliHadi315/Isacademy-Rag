@@ -7,6 +7,8 @@ so a page number can never be invented by the model.
 """
 from __future__ import annotations
 
+import re
+
 from app.i18n import t
 from app.models.gemini import GeminiError, get_gemini
 from app.models.schemas import RetrievalResult, VisualAnswer
@@ -116,7 +118,10 @@ class AnalysisAgent:
                 in_findings = True
                 continue
             if in_findings:
-                cleaned = stripped.lstrip("-*•0123456789. ").strip()
+                # Strip only the list marker. A blanket lstrip("-*• ") would
+                # eat the opening ** of "- **Bold:** text" and leave the
+                # closing one stranded in the UI.
+                cleaned = re.sub(r"^(?:[-*••]|\d+[.)])\s+", "", stripped).strip()
                 if cleaned:
                     findings.append(cleaned)
             else:

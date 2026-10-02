@@ -12,12 +12,16 @@ hardcoded, logged or shown in the UI. The model id is configurable
 from __future__ import annotations
 
 import mimetypes
+import time
 from pathlib import Path
 
 from app.config import settings
 from app.utils.logging import get_logger
 
 log = get_logger("gemini")
+
+MAX_RETRIES = 2            # transient 503s are common at busy times
+RETRY_BASE_DELAY = 1.5     # seconds; doubles each attempt
 
 LANGUAGE_RULE = {
     "en": "Answer in English.",
@@ -79,33 +83,64 @@ class GeminiClient:
         return self._client
 
     # ------------------------------------------------------------------
+    @staticmethod
+    def _is_transient(message: str) -> bool:
+        """503 / overloaded / timeout - worth retrying; a bad key is not."""
+        lowered = message.lower()
+        return any(
+            signal in lowered
+            for signal in ("503", "unavailable", "overloaded", "high demand",
+                           "deadline", "timeout", "500", "internal error")
+        )
+
     def _call(self, contents: list, system: str = "") -> str:
         client = self._get_client()
-        try:
-            from google.genai import types
+        last: Exception | None = None
 
-            config = types.GenerateContentConfig(
-                system_instruction=system or None,
-                temperature=0.2,
-                max_output_tokens=2048,
-            )
-            response = client.models.generate_content(
-                model=self.model, contents=contents, config=config
-            )
-        except Exception as exc:
-            message = str(exc)
-            if "API_KEY" in message.upper() or "401" in message or "PERMISSION" in message.upper():
-                raise GeminiError(
-                    "Gemini rejected the API key. Check GEMINI_API_KEY in .env."
-                ) from exc
-            if "429" in message or "quota" in message.lower():
-                raise GeminiError("Gemini quota or rate limit reached. Try again shortly.") from exc
-            if "not found" in message.lower() and "model" in message.lower():
-                raise GeminiError(
-                    "Gemini model '" + self.model + "' is not available for this key. "
-                    "Set GEMINI_MODEL to a model you have access to."
-                ) from exc
-            raise GeminiError("Gemini request failed: " + message[:300]) from exc
+        # Gemini returns 503 "model is overloaded" fairly often at busy times.
+        # A couple of short retries turns a visible failure into a slight pause.
+        for attempt in range(MAX_RETRIES + 1):
+            try:
+                from google.genai import types
+
+                config = types.GenerateContentConfig(
+                    system_instruction=system or None,
+                    temperature=0.2,
+                    max_output_tokens=2048,
+                )
+                response = client.models.generate_content(
+                    model=self.model, contents=contents, config=config
+                )
+                break
+            except Exception as exc:
+                message = str(exc)
+                upper = message.upper()
+                if "API_KEY" in upper or "401" in message or "PERMISSION" in upper:
+                    raise GeminiError(
+                        "Gemini rejected the API key. Check GEMINI_API_KEY in .env."
+                    ) from exc
+                if "429" in message or "quota" in message.lower():
+                    raise GeminiError(
+                        "Gemini quota or rate limit reached. Try again shortly."
+                    ) from exc
+                if "not found" in message.lower() and "model" in message.lower():
+                    raise GeminiError(
+                        "Gemini model '" + self.model + "' is not available for this key. "
+                        "Set GEMINI_MODEL to a model you have access to."
+                    ) from exc
+
+                last = exc
+                if attempt < MAX_RETRIES and self._is_transient(message):
+                    delay = RETRY_BASE_DELAY * (2 ** attempt)
+                    log.warning(
+                        "Gemini temporarily unavailable (attempt %d/%d) - retrying in %.1fs",
+                        attempt + 1, MAX_RETRIES + 1, delay,
+                    )
+                    time.sleep(delay)
+                    continue
+                raise GeminiError("Gemini request failed: " + message[:300]) from exc
+        else:  # pragma: no cover - the loop always breaks or raises
+            raise GeminiError("Gemini request failed: " + str(last)[:300])
 
         text = (getattr(response, "text", "") or "").strip()
         if not text:

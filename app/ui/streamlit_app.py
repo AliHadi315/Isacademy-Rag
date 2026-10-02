@@ -47,8 +47,15 @@ def _lang() -> str:
 
 
 def _init_state() -> None:
-    st.session_state.setdefault("lang", settings.default_language)
-    st.session_state.setdefault("page", "nav_dashboard")
+    # A ?lang= / ?q= deep link picks the language and jumps straight to the
+    # answer, so a result can be shared as a URL.
+    linked_lang = (st.query_params.get("lang") or "").strip().lower()
+    st.session_state.setdefault(
+        "lang", linked_lang if linked_lang in LANGUAGES else settings.default_language
+    )
+    st.session_state.setdefault(
+        "page", "nav_ask" if st.query_params.get("q") else "nav_dashboard"
+    )
     st.session_state.setdefault("last_answer", None)
     st.session_state.setdefault("prefill", "")
 

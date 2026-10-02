@@ -155,14 +155,33 @@ def documents(lang: str) -> None:
 
 
 # ===========================================================================
-def ask(lang: str) -> None:
-    from app.agents.pipeline import ask as run_pipeline
+@st.cache_data(show_spinner=False, ttl=3600, max_entries=50)
+def run_pipeline(question: str, language: str):
+    """Answer a question, reusing the result for an identical repeat.
 
+    Asking the same thing twice should not pay for Gemini twice - and it makes
+    a shared ?q= link open instantly the second time.
+    """
+    from app.agents.pipeline import ask as _ask
+
+    return _ask(question, language=language)
+
+
+def ask(lang: str) -> None:
     st.title(t("ask_title", lang))
 
     if get_registry().stats()["documents"] == 0:
         st.info(t("empty_index", lang))
         return
+
+    # Deep link: /?q=your+question opens the app with that question already
+    # answered, which makes a result shareable by URL.
+    linked = (st.query_params.get("q") or "").strip()
+    if linked and st.session_state.get("answered_link") != linked:
+        st.session_state.answered_link = linked
+        st.session_state.prefill = linked
+        with st.spinner(t("thinking", lang)):
+            st.session_state.last_answer = run_pipeline(linked, language=lang)
 
     question = st.text_input(
         t("ask_a_question", lang),

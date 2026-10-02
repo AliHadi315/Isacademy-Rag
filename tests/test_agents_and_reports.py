@@ -278,3 +278,74 @@ def test_arabic_pdf_report_contains_arabic_glyphs(tmp_path):
     text = "".join(doc.load_page(i).get_text() for i in range(doc.page_count))
     assert re.search(r"[\u0600-\u06FF\uFE70-\uFEFF]", text), \
         "no Arabic glyphs reached the PDF"
+
+
+def test_split_keeps_markdown_bold_in_findings():
+    """Regression: a blanket lstrip ate the opening ** and stranded the closing one."""
+    _, findings = AnalysisAgent._split(
+        "Intro.\n\nKey findings:\n- **Logging:** removes timber\n- plain one\n2. numbered"
+    )
+    assert findings[0] == "**Logging:** removes timber"
+    assert findings[1] == "plain one"
+    assert findings[2] == "numbered"
+    assert not any(f.endswith("**") and not f.startswith("**") for f in findings)
+
+
+def test_transient_errors_are_retryable_but_auth_errors_are_not():
+    client = GeminiClient(api_key="")
+    assert client._is_transient("503 UNAVAILABLE: model is overloaded")
+    assert client._is_transient("504 deadline exceeded")
+    assert not client._is_transient("API_KEY_INVALID")
+    assert not client._is_transient("permission denied")
+
+
+def test_a_bad_key_is_not_retried(monkeypatch):
+    """An invalid key must fail instantly, not after three slow attempts."""
+    import app.models.gemini as gemini_module
+
+    calls = {"n": 0, "slept": 0.0}
+
+    class FakeModels:
+        def generate_content(self, **kwargs):
+            calls["n"] += 1
+            raise RuntimeError("API_KEY_INVALID: the key is wrong")
+
+    class FakeClient:
+        models = FakeModels()
+
+    monkeypatch.setattr(gemini_module.time, "sleep",
+                        lambda s: calls.__setitem__("slept", calls["slept"] + s))
+    client = GeminiClient(api_key="x")
+    client._client = FakeClient()
+
+    with pytest.raises(GeminiError) as exc:
+        client.generate("hello")
+    assert calls["n"] == 1, "an auth failure must not be retried"
+    assert calls["slept"] == 0.0
+    assert "API key" in str(exc.value)
+
+
+def test_a_transient_error_is_retried_then_succeeds(monkeypatch):
+    import app.models.gemini as gemini_module
+
+    state = {"n": 0}
+
+    class Response:
+        text = "recovered answer"
+
+    class FakeModels:
+        def generate_content(self, **kwargs):
+            state["n"] += 1
+            if state["n"] < 3:
+                raise RuntimeError("503 UNAVAILABLE: model is overloaded")
+            return Response()
+
+    class FakeClient:
+        models = FakeModels()
+
+    monkeypatch.setattr(gemini_module.time, "sleep", lambda s: None)
+    client = GeminiClient(api_key="x")
+    client._client = FakeClient()
+
+    assert client.generate("hello") == "recovered answer"
+    assert state["n"] == 3, "should have retried twice before succeeding"
