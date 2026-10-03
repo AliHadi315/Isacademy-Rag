@@ -1,6 +1,7 @@
 """The six pages. Each takes the active language and renders itself."""
 from __future__ import annotations
 
+import html
 from pathlib import Path
 
 import streamlit as st
@@ -225,11 +226,18 @@ def render_answer(result, lang: str) -> None:
     sources = result.sources
     if sources:
         st.subheader(t("sources", lang))
+        rows = []
         for i, source in enumerate(sources, 1):
-            st.markdown(
-                "<div class='isa-src'>" + str(i) + ". " + source + "</div>",
-                unsafe_allow_html=True,
+            # "file.pdf — Page 12" -> document and locator styled separately
+            document, _, locator = source.partition(" — ")
+            rows.append(
+                "<div class='isa-source-row'>"
+                "<span class='isa-source-n'>" + str(i) + "</span>"
+                "<span class='isa-source-doc'>" + html.escape(document) + "</span>"
+                "<span class='isa-source-page'>" + html.escape(locator) + "</span>"
+                "</div>"
             )
+        st.markdown("".join(rows), unsafe_allow_html=True)
 
     # --- the visual, shown BEFORE its explanation ---
     visual = result.visual

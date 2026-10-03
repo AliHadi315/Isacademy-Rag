@@ -37,6 +37,14 @@ similarity, and explains why they are close.*
 
 ![Dashboard](docs/screenshots/dashboard.png)
 
+### The same interface in Arabic
+
+![The dashboard in Arabic, fully right-to-left](docs/screenshots/arabic-rtl.png)
+
+*Switching language mirrors the whole layout, swaps to IBM Plex Sans Arabic,
+and translates every label — while document filenames, numbers and charts stay
+left-to-right, because those read wrongly when flipped.*
+
 Screenshots are regenerated from a live app with
 `python docs/capture_screenshots.py`.
 

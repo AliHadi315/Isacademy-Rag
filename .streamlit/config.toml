@@ -1,0 +1,79 @@
+# Isacademy AI - Streamlit theme
+#
+# Design direction: "Data-Dense Dashboard" - KPI cards, efficient grid,
+# maximum data visibility, restrained decoration.
+#
+#   primary    #1E40AF   deep blue, used for actions and the query marker
+#   secondary  #3B82F6   lighter blue for supporting accents
+#   accent     #F59E0B   amber, reserved for highlights that must be noticed
+#
+# Fonts are declared here by family name; the @font-face rules that actually
+# load them live in the CSS layer in app/ui/streamlit_app.py, which also
+# swaps in an Arabic family when the interface language is Arabic.
+
+[theme]
+base = "light"
+
+font = "Fira Sans"
+headingFont = "Fira Sans"
+codeFont = "Fira Code"
+
+baseFontSize = 16
+baseRadius = "0.5rem"
+buttonRadius = "0.5rem"
+
+primaryColor = "#1E40AF"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F1F5F9"
+textColor = "#0F172A"
+linkColor = "#1D4ED8"
+borderColor = "#E2E8F0"
+
+showWidgetBorder = true
+showSidebarBorder = true
+
+# Plotly and st.* charts inherit these, so the semantic PCA map, the dataset
+# PCA and every other chart share one palette.
+chartCategoricalColors = [
+    "#1E40AF", "#F59E0B", "#10B981", "#EF4444",
+    "#8B5CF6", "#06B6D4", "#EC4899", "#64748B",
+]
+chartSequentialColors = [
+    "#EFF6FF", "#DBEAFE", "#BFDBFE", "#93C5FD", "#60A5FA",
+    "#3B82F6", "#2563EB", "#1D4ED8", "#1E40AF", "#1E3A8A",
+]
+
+metricValueFontSize = "2.1rem"
+metricValueFontWeight = 600
+
+codeBackgroundColor = "#F8FAFC"
+dataframeHeaderBackgroundColor = "#F1F5F9"
+dataframeBorderColor = "#E2E8F0"
+
+[theme.sidebar]
+backgroundColor = "#F8FAFC"
+secondaryBackgroundColor = "#FFFFFF"
+borderColor = "#E2E8F0"
+baseRadius = "0.5rem"
+
+[theme.dark]
+backgroundColor = "#0B1220"
+secondaryBackgroundColor = "#111A2E"
+textColor = "#E2E8F0"
+primaryColor = "#60A5FA"
+linkColor = "#93C5FD"
+borderColor = "#1E293B"
+codeBackgroundColor = "#0F172A"
+dataframeHeaderBackgroundColor = "#111A2E"
+dataframeBorderColor = "#1E293B"
+
+[theme.dark.sidebar]
+backgroundColor = "#0F172A"
+secondaryBackgroundColor = "#111A2E"
+borderColor = "#1E293B"
+
+[server]
+headless = true
+
+[browser]
+gatherUsageStats = false

@@ -25,7 +25,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "docs" / "screenshots"
 PORT = 9333
-BASE = "http://localhost:8522"
+BASE = "http://localhost:8530"
 
 CHROME_CANDIDATES = [
     r"C:\Program Files\Google\Chrome\Application\chrome.exe",
@@ -54,6 +54,13 @@ SHOTS = [
         "dashboard.png",
         BASE + "/",
         "Indexed documents",
+        1250,
+        TABLE_FILLED,
+    ),
+    (
+        "arabic-rtl.png",
+        BASE + "/?lang=ar",
+        "لوحة التحكم",
         1250,
         TABLE_FILLED,
     ),
@@ -103,6 +110,22 @@ class CDP:
             "Runtime.evaluate", expression=expression, returnByValue=True
         )
         return bool(result.get("result", {}).get("value"))
+
+
+def _trim_tail(path: Path, pad: int = 40) -> None:
+    """Crop the empty page tail so the image is not mostly blank."""
+    try:
+        from PIL import Image, ImageChops
+    except ImportError:
+        return
+    image = Image.open(path).convert("RGB")
+    width, height = image.size
+    # ignore the sidebar column when looking for the last row of content
+    content = image.crop((int(width * 0.22), 0, width, height))
+    blank = Image.new("RGB", content.size, content.getpixel((content.size[0] - 5, 5)))
+    box = ImageChops.difference(content, blank).getbbox()
+    if box and box[3] + pad < height:
+        image.crop((0, 0, width, box[3] + pad)).save(path)
 
 
 def capture(chrome: str) -> list:
@@ -174,6 +197,7 @@ def capture(chrome: str) -> list:
                 shot = cdp.send("Page.captureScreenshot", format="png")
                 path = OUT / name
                 path.write_bytes(base64.b64decode(shot["data"]))
+                _trim_tail(path)
                 written.append(path)
                 print("  ->", path.name, round(path.stat().st_size / 1024), "KB")
     finally:
